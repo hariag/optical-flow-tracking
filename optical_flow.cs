@@ -9,7 +9,7 @@ namespace OpticalFlowTracking
 
         static void Main(string[] args)
         {
-            Mat flow, cflow, gray, prevgray, img_bgr, img_hsv;
+            Mat flow, cflow, gray, prevgray, img_bgr;
             Point[][] contours;
             HierarchyIndex[] hierarchy;
             prevgray = new Mat();
@@ -46,7 +46,25 @@ namespace OpticalFlowTracking
 
                         // Detect edges using Threshold
                         Mat img_thresh = new Mat();
-                        //window.Image = gray_bgr;
+                        img_thresh = Mat.Zeros(frame.Rows, frame.Cols, MatType.CV_8UC1);
+                        Cv2.Threshold(gray_bgr, img_thresh, 155, 255, ThresholdTypes.BinaryInv);
+                        Cv2.FindContours(img_thresh, out contours, out hierarchy, RetrievalModes.External, ContourApproximationModes.ApproxSimple);
+             
+                        if (contours.Length == 0)
+                        {
+                            throw new NotSupportedException("Couldn't find any object in the image.");
+                        }
+
+                        for (int i = 0; i < contours.Length; i++) {
+                            Rect box = Cv2.BoundingRect(contours[i]);
+                            if (box.Width > 50 && box.Height > 50 && box.Width < 900 && box.Height < 680)
+                            {
+                                Cv2.Rectangle(frame,
+                                    box.TopLeft, box.BottomRight,
+                                    new Scalar(0, 255, 0), 4);
+                            }
+                        }
+                        window.Image = frame;
                         Char c = (Char)Cv2.WaitKey(1);
                         if (c == 27) break;
                         Swap<Mat>(ref gray, ref prevgray);
@@ -80,6 +98,7 @@ namespace OpticalFlowTracking
                 -1,           // type of the ouput matrix, if negative same type as input matrix
                 1.0 / mag_max // scaling factor
              );
+
             //build hsv image
             Mat[] _hsv = new Mat[3];
             Mat hsv = new Mat();
@@ -89,7 +108,6 @@ namespace OpticalFlowTracking
             _hsv[2] = Mat.Ones(angle.Size(), MatType.CV_32F);
             Cv2.Merge(_hsv, hsv);
             Cv2.CvtColor(hsv, bgr, ColorConversionCodes.HSV2BGR);
-            Cv2.ImShow("hsv2bgr", bgr);
         }
         static void Swap<T>(ref T lhs, ref T rhs)
         {
