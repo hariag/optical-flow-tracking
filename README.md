@@ -1,4 +1,7 @@
 # Python, C++ and C# optical flow tracking
+
+g++ -std=c++11 optical_flow.cpp -o optflow `pkg-config --cflags --libs opencv`
+
 Using Optical Flow for Detection Motion object.
 
 
